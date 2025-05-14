@@ -13,15 +13,15 @@ import os
 import sys
 from PIL import Image
 from typing import NamedTuple
-from scene.colmap_loader import read_extrinsics_text, read_intrinsics_text, qvec2rotmat, \
+from third_party.scene.colmap_loader import read_extrinsics_text, read_intrinsics_text, qvec2rotmat, \
     read_extrinsics_binary, read_intrinsics_binary, read_points3D_binary, read_points3D_text
-from myutils.graphics_utils import getWorld2View2, focal2fov, fov2focal
+from third_party.myutils.graphics_utils import getWorld2View2, focal2fov, fov2focal
 import numpy as np
 import json
 from pathlib import Path
 from plyfile import PlyData, PlyElement
-from myutils.sh_utils import SH2RGB
-from scene.gaussian_model import BasicPointCloud
+from third_party.myutils.sh_utils import SH2RGB
+from third_party.scene.gaussian_model import BasicPointCloud
 import math
 import torch
 

@@ -25,7 +25,7 @@ from lerf.encoders.openclip_encoder import OpenCLIPNetworkConfig
 from lerf.lerf_field import LERFField
 from lerf.lerf_fieldheadnames import LERFFieldHeadNames
 # from lerf.lerf_renderers import CLIPRenderer, MeanRenderer
-from scene.gaussian_model import GaussianModel
+from third_party.scene.gaussian_model import GaussianModel
 
 
 @dataclass

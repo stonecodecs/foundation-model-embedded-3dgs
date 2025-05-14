@@ -28,7 +28,7 @@ from lerf.data.utils.dino_dataloader import DinoDataloader
 from lerf.data.utils.pyramid_embedding_dataloader import PyramidEmbeddingDataloader
 from lerf.encoders.image_encoder import BaseImageEncoder
 
-from scene import Scene
+from third_party.scene import Scene
 
 class LERFFeatManager():  # pylint: disable=abstract-method
     """Basic stored clip/deno feature and the raw data manager implementation.

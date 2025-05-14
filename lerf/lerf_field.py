@@ -22,8 +22,8 @@ import torch.nn.functional as F
 import sys
 from jaxtyping import Float
 
-from scene.gaussian_model import GaussianModel
-from myutils.general_utils import recover_symetric
+from third_party.scene.gaussian_model import GaussianModel
+from third_party.myutils.general_utils import recover_symetric
 
 try:
     import tinycudann as tcnn

@@ -18,10 +18,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 from diff_gaussian_rasterization import GaussianRasterizationSettings, GaussianRasterizer
 from third_party.scene.gaussian_model import GaussianModel
-from myutils.sh_utils import eval_sh
+from third_party.myutils.sh_utils import eval_sh
 from lerf.lerf_fieldheadnames import LERFFieldHeadNames
 
 from simple_diff_gaussian_rasterization import GaussianRasterizer as SimpleGaussianRasterizer
+
 
 def render(viewpoint_camera, pc : GaussianModel, pipe, bg_color : torch.Tensor, scaling_modifier = 1.0, override_color = None, lerfmodel=None, bvl_feature_precomp=False, fmap_resolution=-1, fmap_render_radiithre=2):
     """

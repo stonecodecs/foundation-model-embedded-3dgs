@@ -12,6 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import sys
+# print("sys.path: ", sys.path)
+sys.path.append("/fmgs_workspace/foundation-model-embedded-3dgs/third_party")
+# sys.path.append("/fmgs_workspace/foundation-model-embedded-3dgs/third_party/myutils")
+# print("sys.path (UPDATED): ", sys.path)
+
 import torch
 from third_party.scene import Scene
 import os
@@ -26,7 +32,7 @@ from gaussian_renderer import GaussianModel
 from third_party.myutils.system_utils import searchForMaxCKPTfile
 from lerf.lerf import LERFModel
 from lerf.encoders.openclip_encoder import OpenCLIPNetworkConfig, OpenCLIPNetwork
-from third_party.myutils.vis_lerf_utils import get_shown_feat_map, get_composited_relevancy_map
+from myutils.vis_lerf_utils import get_shown_feat_map, get_composited_relevancy_map
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
@@ -152,6 +158,7 @@ def get_relavancy(lerf_model, rendered_featmap_clip, rendered_image, img_idx, re
 
 def render_lerf_set(model_path, name, iteration, views, gaussians,  lerf_model, pipeline, background):
     render_path = os.path.join(model_path, name, "ours_{}".format(iteration), "renders")
+    print("render_path: ", render_path)
     # gts_path = os.path.join(model_path, name, "ours_{}".format(iteration), "gt")
 
     makedirs(render_path, exist_ok=True)
@@ -241,6 +248,10 @@ def render_lerf_sets(dataset : ModelParams, ckpt_filename : str, pipeline : Pipe
              render_lerf_set(dataset.model_path, "test", iteration_num, scene.getTestCameras(), gaussians, lerf_model, pipeline, background)
 
 if __name__ == "__main__":
+    import sys
+
+    print("INSIDE RENDER LERF RELEVANCY")
+    print("sys.path: ", sys.path)
     # Set up command line argument parser
     parser = ArgumentParser(description="Testing script parameters")
     model = ModelParams(parser, sentinel=True)
