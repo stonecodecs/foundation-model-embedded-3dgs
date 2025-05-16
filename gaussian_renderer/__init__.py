@@ -26,13 +26,13 @@ from simple_diff_gaussian_rasterization import GaussianRasterizer as SimpleGauss
 
 def render(viewpoint_camera, pc : GaussianModel, pipe, bg_color : torch.Tensor, scaling_modifier = 1.0, override_color = None, lerfmodel=None, bvl_feature_precomp=False, fmap_resolution=-1, fmap_render_radiithre=2):
     """
-    Render the scene. 
-    
+    Render the scene.
+
     Background tensor (bg_color) must be on GPU!
     pc_lerfout: the lerfoutput of the pc (gaussians)
     bvl_feature_precomp: whether we should decode the position encodings to VL features with python firstly before the rendering process
     """
- 
+
     # Create zero tensor. We will use it to make pytorch return gradients of the 2D (screen-space) means
     screenspace_points = torch.zeros_like(pc.get_xyz, dtype=pc.get_xyz.dtype, requires_grad=True, device="cuda") + 0
     try:
@@ -164,6 +164,7 @@ def render(viewpoint_camera, pc : GaussianModel, pipe, bg_color : torch.Tensor, 
         clip_scales = radii_rendered_image[valid_gaussian_mask].detach() # TODO: the value of clip_scales needs to be checked.
         lerf_field_outputs = lerfmodel(pc, clip_scales, valid_gaussian_mask) # dict with keys "LERFFieldHeadNames.HASHGRID, LERFFieldHeadNames.CLIP, LERFFieldHeadNames.DINO"
 
+        # TODO: update lerf field (what the MHE is called in the code) to not require an MLP in ./lerf/lerf.py
         feature_dinomap_precomp = lerf_field_outputs[LERFFieldHeadNames.DINO]
         feature_clipmap_precomp = lerf_field_outputs[LERFFieldHeadNames.CLIP]
 
@@ -180,6 +181,8 @@ def render(viewpoint_camera, pc : GaussianModel, pipe, bg_color : torch.Tensor, 
             rotations=rotations[valid_gaussian_mask].detach(),
             cov3D_precomp=cov3D_precomp_)
 
+    # TODO: do post-processing convolutions here for rendered DINO and CLIP feature maps
+    # Will also need to modify LERF model to not use an MLP n shit
 
     # Those Gaussians that were frustum culled or had a radius of 0 were not visible.
     # They will be excluded from value updates used in the splitting criteria.

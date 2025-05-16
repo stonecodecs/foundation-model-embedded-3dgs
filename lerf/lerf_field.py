@@ -144,6 +144,8 @@ class LERFField(nn.Module):
         xs = [e(positions.view(-1, 3)) for e in self.clip_encs]
         x = torch.concat(xs, dim=-1)
 
+        # TODO: delete clip_net and dino_net and just render the raw MHE embeddings
+        # Then do convolutions n shit in render()
         clip_pass = self.clip_net(x).view(positions.shape[0], -1)
         clip_pass = clip_pass + 1e-8 # This can be enabled to stabelize the training.
         clip_pass = F.normalize(clip_pass, dim=-1, eps=1e-4) # e31cca45-5, this also incurs nan gradient
