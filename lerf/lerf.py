@@ -27,6 +27,7 @@ from lerf.lerf_fieldheadnames import LERFFieldHeadNames
 # from lerf.lerf_renderers import CLIPRenderer, MeanRenderer
 from third_party.scene.gaussian_model import GaussianModel
 
+DINO_DIM = 384 # Dino dimensions used in lerf field and stuff
 
 @dataclass
 class LERFModelConfig():
@@ -56,13 +57,35 @@ class LERFModel(nn.Module):
             clip_n_dims=self.image_encoder_featdim,
         )
         self.intermed_vlfeat_dim = self.lerf_field.intermed_vlfeat_dim
+        mhe_dim = self.intermed_vlfeat_dim
+        self.clip_cnn = nn.Sequential(
+            nn.Conv2d(mhe_dim, 256, 1),
+            nn.ReLU(),
+            nn.Conv2d(256, 256, 1),
+            nn.ReLU(),
+            nn.Conv2d(256, 256, 1),
+            nn.ReLU(),
+            nn.Conv2d(256, 256, 1),
+            nn.ReLU(),
+            nn.Conv2d(256, self.image_encoder_featdim, 1)
+        )
 
-    def forward(self, gaussian_samples: GaussianModel, clip_scales, valid_gaussians_mask=None):
-        outputs = {}
-        lerf_field_outputs = self.lerf_field.get_outputs(gaussian_samples, clip_scales, valid_gaussians_mask) # The gaussian_samples.feature_vl is changed in this function
-        return lerf_field_outputs
+        self.dino_cnn = nn.Sequential(
+            nn.Conv2d(mhe_dim, 256, 1),
+            nn.ReLU(),
+            nn.Conv2d(256, DINO_DIM, 1)
+        )
 
-    def get_relevancy_img (self, fmap_embed, lerf_image_encoder, query_embed = None):
+    def forward(self, gaussian_samples: GaussianModel=None, clip_scales=None, valid_gaussians_mask=None, mhe_feat_map=None):
+        if mhe_feat_map is None:
+            outputs = {}
+            lerf_field_outputs = self.lerf_field.get_outputs(gaussian_samples, clip_scales, valid_gaussians_mask) # The gaussian_samples.feature_vl is changed in this function
+            return lerf_field_outputs
+        else:
+            # TODO: run convolutions for CLIP and DINO embeddings
+            return self.dino_cnn(mhe_feat_map), self.clip_cnn(mhe_feat_map)
+
+    def get_relevancy_img(self, fmap_embed, lerf_image_encoder, query_embed = None):
         '''
         fmap_embed: C, H, W
         '''

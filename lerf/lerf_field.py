@@ -143,19 +143,19 @@ class LERFField(nn.Module):
 
         xs = [e(positions.view(-1, 3)) for e in self.clip_encs]
         x = torch.concat(xs, dim=-1)
-
-        # TODO: delete clip_net and dino_net and just render the raw MHE embeddings
+        outputs[LERFFieldHeadNames.MHE] = x.float().view(positions.shape[0], -1)
+        # BEN TODO: delete clip_net and dino_net and just render the raw MHE embeddings
         # Then do convolutions n shit in render()
-        clip_pass = self.clip_net(x).view(positions.shape[0], -1)
-        clip_pass = clip_pass + 1e-8 # This can be enabled to stabelize the training.
-        clip_pass = F.normalize(clip_pass, dim=-1, eps=1e-4) # e31cca45-5, this also incurs nan gradient
-        outputs[LERFFieldHeadNames.CLIP] = clip_pass.float()
+        # clip_pass = self.clip_net(x).view(positions.shape[0], -1)
+        # clip_pass = clip_pass + 1e-8 # This can be enabled to stabelize the training.
+        # clip_pass = F.normalize(clip_pass, dim=-1, eps=1e-4) # e31cca45-5, this also incurs nan gradient
+        # outputs[LERFFieldHeadNames.CLIP] = clip_pass.float()
 
-        dino_pass = self.dino_net(x).view(positions.shape[0], -1)
-        dino_pass = dino_pass.float()
-        outputs[LERFFieldHeadNames.DINO] = dino_pass
-        if clip_pass.isnan().any() or dino_pass.isnan().any():
-            print(f"---- The ratio of Nan: {dino_pass.sum(dim=1).isnan().sum()}/{dino_pass.shape[0]}, dino_pass: {dino_pass}")
-            print(f"---- The ratio of Nan: {clip_pass.sum(dim=1).isnan().sum()}/{clip_pass.shape[0]}, clip_pass: {clip_pass}")
+        # dino_pass = self.dino_net(x).view(positions.shape[0], -1)
+        # dino_pass = dino_pass.float()
+        # outputs[LERFFieldHeadNames.DINO] = dino_pass
+        # if clip_pass.isnan().any() or dino_pass.isnan().any():
+        #     print(f"---- The ratio of Nan: {dino_pass.sum(dim=1).isnan().sum()}/{dino_pass.shape[0]}, dino_pass: {dino_pass}")
+        #     print(f"---- The ratio of Nan: {clip_pass.sum(dim=1).isnan().sum()}/{clip_pass.shape[0]}, clip_pass: {clip_pass}")
         return outputs
 

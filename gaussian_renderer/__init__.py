@@ -165,24 +165,29 @@ def render(viewpoint_camera, pc : GaussianModel, pipe, bg_color : torch.Tensor, 
         lerf_field_outputs = lerfmodel(pc, clip_scales, valid_gaussian_mask) # dict with keys "LERFFieldHeadNames.HASHGRID, LERFFieldHeadNames.CLIP, LERFFieldHeadNames.DINO"
 
         # TODO: update lerf field (what the MHE is called in the code) to not require an MLP in ./lerf/lerf.py
-        feature_dinomap_precomp = lerf_field_outputs[LERFFieldHeadNames.DINO]
-        feature_clipmap_precomp = lerf_field_outputs[LERFFieldHeadNames.CLIP]
+        feature_mhe_precomp = lerf_field_outputs[lerf_field_outputs.MHE]
+
+        # feature_dinomap_precomp = lerf_field_outputs[LERFFieldHeadNames.DINO]
+        # feature_clipmap_precomp = lerf_field_outputs[LERFFieldHeadNames.CLIP]
 
         simple_rasterizer = SimpleGaussianRasterizer(raster_settings=raster_settings)
         cov3D_precomp_ = cov3D_precomp_[valid_gaussian_mask].detach() if cov3D_precomp is not None else None
-        rendered_featmap, rendered_featmap_ex, radii_rendered_featmap = simple_rasterizer(
+        # TODO: look into rasterizer API
+        rendered_featmap, _, radii_rendered_featmap = simple_rasterizer(
             means3D=means3D[valid_gaussian_mask].detach(),
             means2D=means2D[valid_gaussian_mask].detach(),
             shs=None,
-            colors_precomp=feature_dinomap_precomp.float(),
-            colors_ex_precomp=feature_clipmap_precomp.float(),
+            colors_precomp=feature_mhe_precomp.float(),
+            colors_ex_precomp=None,
+            # colors_ex_precomp=feature_clipmap_precomp.float(),
             opacities=opacity[valid_gaussian_mask].detach(),
             scales=scales[valid_gaussian_mask].detach(),
             rotations=rotations[valid_gaussian_mask].detach(),
             cov3D_precomp=cov3D_precomp_)
 
-    # TODO: do post-processing convolutions here for rendered DINO and CLIP feature maps
-    # Will also need to modify LERF model to not use an MLP n shit
+        # TODO: do post-processing convolutions here for rendered DINO and CLIP feature maps
+        # Will also need to modify LERF model to not use an MLP n shit
+        rendered_featmap, rendered_featmap_ex = lerfmodel(mhe_feat_map=rendered_featmap)
 
     # Those Gaussians that were frustum culled or had a radius of 0 were not visible.
     # They will be excluded from value updates used in the splitting criteria.

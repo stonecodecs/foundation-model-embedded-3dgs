@@ -1,0 +1,7 @@
+{
+    "python.analysis.typeCheckingMode": "off",
+    "python.analysis.extraPaths": [
+        "./third_party/simple-diff-gaussian-rasterization",
+        "./third_party/diff-gaussian-rasterization"
+    ]
+}
