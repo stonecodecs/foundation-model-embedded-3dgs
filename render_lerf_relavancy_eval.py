@@ -219,6 +219,8 @@ def render_lerf_sets(dataset : ModelParams, ckpt_filename : str, pipeline : Pipe
     with torch.no_grad():
         # Load the saved ckpt
         loaded_statedict = torch.load(ckpt_filename)
+        print("loaded_statedict: ", loaded_statedict)   
+        print("loaded_statedict_keys: ", loaded_statedict.keys())
         assert isinstance(loaded_statedict, dict), f"The given ckpt {ckpt_filename} is probably not a VL_GS model!"
         gaussians_model_params = loaded_statedict['gaussians']
         iteration_num = loaded_statedict['iteration']

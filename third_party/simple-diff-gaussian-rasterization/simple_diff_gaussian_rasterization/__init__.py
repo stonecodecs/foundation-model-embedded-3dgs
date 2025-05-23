@@ -82,6 +82,35 @@ class _RasterizeGaussians(torch.autograd.Function):
             raster_settings.debug
         )
 
+        arg_names = [
+            "bg", 
+            "means3D",
+            "colors_precomp",
+            "colors_ex_precomp",
+            "opacities",
+            "scales",
+            "rotations",
+            "scale_modifier",
+            "cov3Ds_precomp",
+            "viewmatrix",
+            "projmatrix",
+            "tanfovx",
+            "tanfovy",
+            "image_height",
+            "image_width",
+            "sh",
+            "sh_degree",
+            "campos",
+            "prefiltered",
+            "debug"
+        ]
+
+        for i, arg in enumerate(args):
+            if isinstance(arg, torch.Tensor):
+                print(f"{arg_names[i]}: {arg.shape}") 
+            else:
+                print(f"{arg_names[i]}: {arg}")
+
         # Invoke C++/CUDA rasterizer
         if raster_settings.debug:
             cpu_args = cpu_deep_copy_tuple(args) # Copy them before they can be corrupted

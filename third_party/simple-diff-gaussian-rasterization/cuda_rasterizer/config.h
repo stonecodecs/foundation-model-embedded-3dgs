@@ -13,8 +13,10 @@
 #define CUDA_RASTERIZER_CONFIG_H_INCLUDED
 
 #define NUM_CHANNELS 3 // Default 3, RGB
-#define VL_FEATURE_NUM_CHANNELS 384 // 384 for Dino feature, 512 for Clip feature
-#define VL_FEATURE_EX_NUM_CHANNELS 512 // 512 for Clip feature
+// #define VL_FEATURE_NUM_CHANNELS 384 // 384 for Dino feature, 512 for Clip feature
+#define VL_FEATURE_NUM_CHANNELS 192 // 384 for Dino feature, 512 for Clip feature
+#define VL_FEATURE_EX_NUM_CHANNELS 192 // 512 for Clip feature
+// #define VL_FEATURE_EX_NUM_CHANNELS 512 // 512 for Clip feature
 #define BLOCK_X 16
 #define BLOCK_Y 16
 

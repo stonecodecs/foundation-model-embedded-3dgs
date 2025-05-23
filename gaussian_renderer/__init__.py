@@ -165,7 +165,8 @@ def render(viewpoint_camera, pc : GaussianModel, pipe, bg_color : torch.Tensor, 
         lerf_field_outputs = lerfmodel(pc, clip_scales, valid_gaussian_mask) # dict with keys "LERFFieldHeadNames.HASHGRID, LERFFieldHeadNames.CLIP, LERFFieldHeadNames.DINO"
 
         # TODO: update lerf field (what the MHE is called in the code) to not require an MLP in ./lerf/lerf.py
-        feature_mhe_precomp = lerf_field_outputs[lerf_field_outputs.MHE]
+        # feature_mhe_precomp = lerf_field_outputs[lerf_field_outputs.MHE]
+        feature_mhe_precomp = lerf_field_outputs[LERFFieldHeadNames.MHE]
 
         # feature_dinomap_precomp = lerf_field_outputs[LERFFieldHeadNames.DINO]
         # feature_clipmap_precomp = lerf_field_outputs[LERFFieldHeadNames.CLIP]
@@ -178,7 +179,8 @@ def render(viewpoint_camera, pc : GaussianModel, pipe, bg_color : torch.Tensor, 
             means2D=means2D[valid_gaussian_mask].detach(),
             shs=None,
             colors_precomp=feature_mhe_precomp.float(),
-            colors_ex_precomp=None,
+            # colors_ex_precomp=None,
+            colors_ex_precomp=feature_mhe_precomp.float(),
             # colors_ex_precomp=feature_clipmap_precomp.float(),
             opacities=opacity[valid_gaussian_mask].detach(),
             scales=scales[valid_gaussian_mask].detach(),
