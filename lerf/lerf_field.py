@@ -92,29 +92,29 @@ class LERFField(nn.Module):
         tot_out_dims = sum(self.intermed_vlfeat_dimlist)
         self.intermed_vlfeat_dim = tot_out_dims
 
-        self.clip_net = tcnn.Network(
-            n_input_dims=tot_out_dims, # + 1,
-            n_output_dims=clip_n_dims,
-            network_config={
-                "otype": "CutlassMLP",
-                "activation": "ReLU",
-                "output_activation": "None",
-                "n_neurons": 256,
-                "n_hidden_layers": 4,
-            },
-        )
+        # self.clip_net = tcnn.Network(
+        #     n_input_dims=tot_out_dims, # + 1,
+        #     n_output_dims=clip_n_dims,
+        #     network_config={
+        #         "otype": "CutlassMLP",
+        #         "activation": "ReLU",
+        #         "output_activation": "None",
+        #         "n_neurons": 256,
+        #         "n_hidden_layers": 4,
+        #     },
+        # )
 
-        self.dino_net = tcnn.Network(
-            n_input_dims=tot_out_dims,
-            n_output_dims=384, # 384 for dino, 64 for pca compressed dino, 768 for dinov2?
-            network_config={
-                "otype": "CutlassMLP",
-                "activation": "ReLU",
-                "output_activation": "None",
-                "n_neurons": 256,
-                "n_hidden_layers": 1,
-            },
-        )
+        # self.dino_net = tcnn.Network(
+        #     n_input_dims=tot_out_dims,
+        #     n_output_dims=384, # 384 for dino, 64 for pca compressed dino, 768 for dinov2?
+        #     network_config={
+        #         "otype": "CutlassMLP",
+        #         "activation": "ReLU",
+        #         "output_activation": "None",
+        #         "n_neurons": 256,
+        #         "n_hidden_layers": 1,
+        #     },
+        # )
 
     @staticmethod
     def _get_encoding(start_res, end_res, levels, indim=3, hash_size=19):

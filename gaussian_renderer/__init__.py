@@ -172,6 +172,7 @@ def render(viewpoint_camera, pc : GaussianModel, pipe, bg_color : torch.Tensor, 
         # feature_clipmap_precomp = lerf_field_outputs[LERFFieldHeadNames.CLIP]
 
         simple_rasterizer = SimpleGaussianRasterizer(raster_settings=raster_settings)
+        print(f"feature_mhe_precomp.shape: {feature_mhe_precomp.size()}")
         cov3D_precomp_ = cov3D_precomp_[valid_gaussian_mask].detach() if cov3D_precomp is not None else None
         # TODO: look into rasterizer API
         rendered_featmap, _, radii_rendered_featmap = simple_rasterizer(
@@ -189,7 +190,8 @@ def render(viewpoint_camera, pc : GaussianModel, pipe, bg_color : torch.Tensor, 
 
         # TODO: do post-processing convolutions here for rendered DINO and CLIP feature maps
         # Will also need to modify LERF model to not use an MLP n shit
-        rendered_featmap, rendered_featmap_ex = lerfmodel(mhe_feat_map=rendered_featmap)
+        print(f"rendered_featmap.shape: {rendered_featmap.size()}")
+        rendered_featmap, rendered_featmap_ex = lerfmodel.dino_cnn(rendered_featmap), lerfmodel.clip_cnn(rendered_featmap)
 
     # Those Gaussians that were frustum culled or had a radius of 0 were not visible.
     # They will be excluded from value updates used in the splitting criteria.

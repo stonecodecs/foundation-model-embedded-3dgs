@@ -65,8 +65,11 @@ RasterizeGaussiansCUDA(
   const int P = means3D.size(0);
   const int H = image_height;
   const int W = image_width;
+//   printf("Before accessing size(1)\n");
   const int FEATURES_CH = colors_precomp.size(1);
+  // TODO: remove features_ex_ch later from codebase
   const int FEATURES_EX_CH = colors_ex_precomp.size(1);
+//   printf("After accessing size(1)\n");
   //printf("FEATURES_CH, VL_FEATURE_NUM_CHANNELS in RasterizeGaussiansCUDA(): %d, %d\n", FEATURES_CH, VL_FEATURE_NUM_CHANNELS);
 
   auto int_opts = means3D.options().dtype(torch::kInt32);
