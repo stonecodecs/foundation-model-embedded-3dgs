@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# Activate conda environment
+source ../anaconda3/bin/activate
+conda activate fmgs  # Replace 'fmgs' with your actual environment name
+
 # Command line arguments to select specific scenes or run all if none are given
 export DATA_PATH="./data/tidy_lerf/fmgs_postprocessed_lerfdata_trainedweights"
 
@@ -27,9 +31,10 @@ echo "Running for selected scenes (${SELECTED_SCENES[@]})"
 # Function to start GPU memory logging
 start_gpu_logging() {
     local scene=$1
+    mkdir -p ${scene}_output
     while true; do
-        echo "$(date '+%Y-%m-%d %H:%M:%S')" >> gpu_memory_${scene}.log
-        nvidia-smi --query-gpu=memory.used --format=csv >> gpu_memory_${scene}.log
+        echo "$(date '+%Y-%m-%d %H:%M:%S')" >> ${scene}_output/gpu_memory_${scene}.log
+        nvidia-smi --query-gpu=memory.used --format=csv >> ${scene}_output/gpu_memory_${scene}.log
         sleep 120
     done
 }
@@ -46,6 +51,7 @@ for SCENE in "${SELECTED_SCENES[@]}"; do
     
     echo -e "Constructing Gaussians for $SCENE...\n"
     python train.py -s "$DATA_PATH/$SCENE/$SCENE" --model_path ${SCENE}_output --test_iterations 7000 30000 --save_iterations 7000 30000 --iterations 30000 --checkpoint_iterations 7000 30000 --port 6009
+    echo "$(date '+%Y-%m-%d %H:%M:%S') - Gaussian construction completed for $SCENE; now training..." >> ${SCENE}_output/gpu_memory_${SCENE}.log
     echo -e "Training for $SCENE...\n"
     python train.py -s $DATA_PATH/$SCENE/$SCENE --model_path ${SCENE}_output  --opt_vlrenderfeat_from 30000 --test_iterations 32000 32500  --save_iterations 32000 32500 --iterations 32500  --checkpoint_iterations 32000 32500 --start_checkpoint ${SCENE}_output/chkpnt30000.pth --fmap_resolution 2 --lambda_clip 0.2  --fmap_lr 0.005  --fmap_render_radiithre 2  --port 6009
     echo -e "Finished training for $SCENE.\n"
@@ -55,8 +61,6 @@ for SCENE in "${SELECTED_SCENES[@]}"; do
     
     sleep 5
     kill $LOGGER_PID # end GPU logging for this scene
-    sleep 2
-    mv gpu_memory_${SCENE}.log ${SCENE}_output/
     sleep 1 
     cp ${SCENE}_output/ /workspace/volume/fmgs_outputs
     sleep 1

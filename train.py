@@ -349,11 +349,13 @@ def training(dataset, opt, pipe, testing_iterations, saving_iterations, checkpoi
         with torch.no_grad():
             # Progress bar
             ema_loss_for_log = 0.4 * loss.item() + 0.6 * ema_loss_for_log
+            if iteration == 10:
+                with open(os.path.join(scene.model_path, "training_losses.txt"), "a") as f:
+                    f.write("iteration,loss,(PSNR/L1)\n")
             if iteration % 10 == 0:
                 progress_bar.set_postfix({"Loss": f"{ema_loss_for_log:.{7}f}"})
                 progress_bar.update(10)
                 with open(os.path.join(scene.model_path, "training_losses.txt"), "a") as f:
-	                f.write("iteration,loss\n")
 	                f.write(f"{iteration},{ema_loss_for_log:.7f}\n")
                 
             if iteration == opt.iterations:
@@ -453,6 +455,11 @@ def training_report(tb_writer, iteration, Ll1_rec, loss, l1_loss, elapsed, testi
                 if tb_writer:
                     tb_writer.add_scalar(config['name'] + '/loss_viewpoint - l1_loss', l1_test, iteration)
                     tb_writer.add_scalar(config['name'] + '/loss_viewpoint - psnr', psnr_test, iteration)
+                
+                # Log PSNR to training_losses.txt
+                with open(os.path.join(scene.model_path, "training_losses.txt"), "a") as f:
+                    f.write(f"{iteration},,PSNR_{config['name']}: {psnr_test:.2f}\n")
+                    f.write(f"{iteration},,L1_{config['name']}: {l1_test:.2f}\n")
 
         if tb_writer:
             tb_writer.add_histogram("scene/opacity_histogram", scene.gaussians.get_opacity, iteration)
