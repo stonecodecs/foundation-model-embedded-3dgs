@@ -62,7 +62,7 @@ for SCENE in "${SELECTED_SCENES[@]}"; do
     sleep 5
     kill $LOGGER_PID # end GPU logging for this scene
     sleep 1 
-    cp ${SCENE}_output/ /workspace/volume/fmgs_outputs
+    cp -r ${SCENE}_output/ /workspace/volume/fmgs_outputs
     sleep 1
     echo -e "Completed $SCENE."
 done
