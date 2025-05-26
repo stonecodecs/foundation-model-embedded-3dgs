@@ -352,6 +352,10 @@ def training(dataset, opt, pipe, testing_iterations, saving_iterations, checkpoi
             if iteration % 10 == 0:
                 progress_bar.set_postfix({"Loss": f"{ema_loss_for_log:.{7}f}"})
                 progress_bar.update(10)
+                with open(os.path.join(scene.model_path, "training_losses.txt"), "a") as f:
+	                f.write("iteration,loss\n")
+	                f.write(f"{iteration},{ema_loss_for_log:.7f}\n")
+                
             if iteration == opt.iterations:
                 progress_bar.close()
 
