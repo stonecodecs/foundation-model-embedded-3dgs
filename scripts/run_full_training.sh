@@ -24,11 +24,26 @@ fi
 
 echo "Running for selected scenes (${SELECTED_SCENES[@]})"
 
+# Function to start GPU memory logging
+start_gpu_logging() {
+    local scene=$1
+    while true; do
+        echo "$(date '+%Y-%m-%d %H:%M:%S')" >> gpu_memory_${scene}.log
+        nvidia-smi --query-gpu=memory.used --format=csv >> gpu_memory_${scene}.log
+        sleep 120
+    done
+}
+
 # iterate over all selected scenes
 for SCENE in "${SELECTED_SCENES[@]}"; do
     echo -e "-----------------------------------\n"
     echo -e "$SCENE\n"
     echo -e "-----------------------------------\n"
+    
+    # Start GPU memory logging in background
+    start_gpu_logging $SCENE &
+    LOGGER_PID=$!
+    
     echo -e "Constructing Gaussians for $SCENE...\n"
     python train.py -s "$DATA_PATH/$SCENE/$SCENE" --model_path ${SCENE}_output --test_iterations 7000 30000 --save_iterations 7000 30000 --iterations 30000 --checkpoint_iterations 7000 30000 --port 6009
     echo -e "Training for $SCENE...\n"
@@ -37,7 +52,15 @@ for SCENE in "${SELECTED_SCENES[@]}"; do
     echo -e "Rendering + eval for $SCENE...\n"
     python ./render_lerf_relavancy_eval.py -s $DATA_PATH/$SCENE/$SCENE -m ${SCENE}_output/ --dataformat colmap --eval_keyframe_path_filename $DATA_PATH/Localization_eval_puremycolmap/${SCENE}/keyframes_reversed_transform2colmap.json --iteration 32500
     mkdir -p /workspace/volume/fmgs_outputs
+    
+    sleep 5
+    kill $LOGGER_PID # end GPU logging for this scene
+    sleep 2
+    mv gpu_memory_${SCENE}.log ${SCENE}_output/
+    sleep 1 
     cp ${SCENE}_output/ /workspace/volume/fmgs_outputs
+    sleep 1
+    echo -e "Completed $SCENE."
 done
 
 echo "All training sequences completed!"
