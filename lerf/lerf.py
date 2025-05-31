@@ -58,16 +58,30 @@ class LERFModel(nn.Module):
         )
         self.intermed_vlfeat_dim = self.lerf_field.intermed_vlfeat_dim
         mhe_dim = self.intermed_vlfeat_dim
+        # self.clip_cnn = nn.Sequential(
+        #     nn.Conv2d(mhe_dim, 256, 1),
+        #     nn.ReLU(),
+        #     nn.Conv2d(256, 256, 1),
+        #     nn.ReLU(),
+        #     nn.Conv2d(256, 256, 1),
+        #     nn.ReLU(),
+        #     nn.Conv2d(256, 256, 1),
+        #     nn.ReLU(),
+        #     nn.Conv2d(256, self.image_encoder_featdim, 1)
+        # )
+
         self.clip_cnn = nn.Sequential(
-            nn.Conv2d(mhe_dim, 256, 1),
+            nn.Conv2d(mhe_dim, 64, 3, stride=2, padding=1),
             nn.ReLU(),
-            nn.Conv2d(256, 256, 1),
+            nn.Conv2d(64, 128, 3, stride=2, padding=1),
             nn.ReLU(),
-            nn.Conv2d(256, 256, 1),
+            nn.Conv2d(128, 256, 3, stride=1, padding=1),
             nn.ReLU(),
-            nn.Conv2d(256, 256, 1),
+            nn.Upsample(scale_factor=2, mode='bilinear', align_corners=False),
+            nn.Conv2d(256, 128, 3, padding=1),
             nn.ReLU(),
-            nn.Conv2d(256, self.image_encoder_featdim, 1)
+            nn.Upsample(scale_factor=2, mode='bilinear', align_corners=False),
+            nn.Conv2d(128, self.image_encoder_featdim, 1, padding=1),
         )
 
         self.dino_cnn = nn.Sequential(
