@@ -276,8 +276,10 @@ def training(dataset, opt, pipe, testing_iterations, saving_iterations, checkpoi
                 # plt.show()
 
                 ## Visualize the relevancy map for rendered CLIP at the image resolution
-                # rendered_clip_feat_map_scaled = F.interpolate(rendered_featmap_clip_scaled.unsqueeze(dim=0), size=(H_gtimg, W_gtimg), mode="bilinear").squeeze(dim=0)
-                pos_prob_maps_rendered = lerf_model.get_relevancy_img(rendered_featmap_clip, lerf_image_encoder) # (n_positive_embeds, H, W, 1)
+                # Upsample rendered (raw) feature map to match image dimensions 
+                # NOTE: so far HARDCODED for fmap_resolution=4, same with @lerf.py CNNs
+                rendered_featmap_clip_scaled = F.interpolate(rendered_featmap_clip.unsqueeze(dim=0), size=(H_gtimg, W_gtimg), mode="bilinear").squeeze(dim=0)
+                pos_prob_maps_rendered = lerf_model.get_relevancy_img(rendered_featmap_clip_scaled, lerf_image_encoder) # (n_positive_embeds, H, W, 1)
                 rendered_composited_relevancy_maps = get_composited_relevancy_map(gt_image.permute(1,2,0).contiguous(), pos_prob_maps_rendered) # n_positive_embeds [(H, W, 1)]
 
                 clip_feat_map_scaled = F.interpolate(clip_feat_map.unsqueeze(dim=0), size=(H_gtimg, W_gtimg), mode="bilinear").squeeze(dim=0) # (C, H, W)
