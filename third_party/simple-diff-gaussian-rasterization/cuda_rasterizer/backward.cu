@@ -74,7 +74,7 @@ renderCUDA(
 	if (inside)
 		for (int i = 0; i < CH; i++)
 			dL_dpixel[i] = dL_dpixels[i * H * W + pix_id];
-    if (inside)
+    if (inside && colors_ex != nullptr)
         for (int i = 0; i < CH_EX; i++)
             dL_dpixel_ex[i] = dL_dpixels_ex[i * H * W + pix_id];
 
@@ -152,16 +152,19 @@ renderCUDA(
 				atomicAdd(&(dL_dcolors[global_id * CH + ch]), dchannel_dcolor * dL_dchannel);
 			}
 
-            for (int ch = 0; ch < CH_EX; ch++)
+            if (colors_ex != nullptr)
             {
-                const float c = colors_ex[global_id * CH_EX + ch];
+                for (int ch = 0; ch < CH_EX; ch++)
+                {
+                    const float c = colors_ex[global_id * CH_EX + ch];
 
-                // Update last color (to be used in the next iteration)
-                accum_rec_ex[ch] = last_alpha * last_color_ex[ch] + (1.f - last_alpha) * accum_rec_ex[ch];
-                last_color_ex[ch] = c;
+                    // Update last color (to be used in the next iteration)
+                    accum_rec_ex[ch] = last_alpha * last_color_ex[ch] + (1.f - last_alpha) * accum_rec_ex[ch];
+                    last_color_ex[ch] = c;
 
-                const float dL_dchannel_ex = dL_dpixel_ex[ch];
-                atomicAdd(&(dL_dcolors_ex[global_id * CH_EX + ch]), dchannel_dcolor * dL_dchannel_ex);
+                    const float dL_dchannel_ex = dL_dpixel_ex[ch];
+                    atomicAdd(&(dL_dcolors_ex[global_id * CH_EX + ch]), dchannel_dcolor * dL_dchannel_ex);
+                }
             }
 
 			// Update last alpha (to be used in the next iteration)
@@ -215,10 +218,14 @@ void BACKWARD::render(
         printf("FEATURES_CH != VL_FEATURE_NUM_CHANNELS:  %d %d \n", FEATURES_CH, VL_FEATURE_NUM_CHANNELS);
     }
     assert(FEATURES_CH==VL_FEATURE_NUM_CHANNELS);
-    if (FEATURES_EX_CH != VL_FEATURE_EX_NUM_CHANNELS){
-        printf("FEATURES_EX_CH != VL_FEATURE_EX_NUM_CHANNELS:  %d %d \n", FEATURES_EX_CH, VL_FEATURE_EX_NUM_CHANNELS);
+    
+    // Only check FEATURES_EX_CH if we're using the second feature map
+    if (colors_ex != nullptr) {
+        if (FEATURES_EX_CH != VL_FEATURE_EX_NUM_CHANNELS){
+            printf("FEATURES_EX_CH != VL_FEATURE_EX_NUM_CHANNELS:  %d %d \n", FEATURES_EX_CH, VL_FEATURE_EX_NUM_CHANNELS);
+        }
+        assert(FEATURES_EX_CH==VL_FEATURE_EX_NUM_CHANNELS);
     }
-    assert(FEATURES_EX_CH==VL_FEATURE_EX_NUM_CHANNELS);
 
     // renderCUDA
     renderCUDA<VL_FEATURE_NUM_CHANNELS, VL_FEATURE_EX_NUM_CHANNELS> << <grid, block >> >(

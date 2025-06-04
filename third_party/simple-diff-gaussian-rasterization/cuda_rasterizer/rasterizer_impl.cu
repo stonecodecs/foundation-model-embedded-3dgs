@@ -325,7 +325,7 @@ int CudaRasterizer::Rasterizer::forward(
     assert(colors_precomp != nullptr);
     // assert(colors_ex_precomp != nullptr);
 	const float* feature_ptr = colors_precomp != nullptr ? colors_precomp : geomState.rgb;
-    const float* feature_ex_ptr = nullptr;
+    const float* feature_ex_ptr = colors_ex_precomp != nullptr ? colors_ex_precomp : nullptr;
 	CHECK_CUDA(FORWARD::render(
 		tile_grid, block,
 		imgState.ranges,
@@ -391,13 +391,13 @@ void CudaRasterizer::Rasterizer::backward(
 	const dim3 block(BLOCK_X, BLOCK_Y, 1);
 
     assert(colors_precomp != nullptr);
-    assert(colors_ex_precomp != nullptr);
+    // assert(colors_ex_precomp != nullptr);  // Make colors_ex_precomp optional
 
 	// Compute loss gradients w.r.t. 2D mean position, conic matrix,
 	// opacity and RGB of Gaussians from per-pixel loss gradients.
 	// If we were given precomputed colors and not SHs, use them.
 	const float* color_ptr = (colors_precomp != nullptr) ? colors_precomp : geomState.rgb;
-    const float* color_ex_ptr = (colors_ex_precomp != nullptr) ? colors_ex_precomp : geomState.rgb;
+    const float* color_ex_ptr = (colors_ex_precomp != nullptr) ? colors_ex_precomp : nullptr;
 	CHECK_CUDA(BACKWARD::render(
 		tile_grid,
 		block,

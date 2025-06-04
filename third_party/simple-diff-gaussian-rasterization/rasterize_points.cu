@@ -40,7 +40,6 @@ RasterizeGaussiansCUDA(
 	const torch::Tensor& background,
 	const torch::Tensor& means3D,
     const torch::Tensor& colors_precomp,
-    const torch::Tensor& colors_ex_precomp,
     const torch::Tensor& opacity,
 	const torch::Tensor& scales,
 	const torch::Tensor& rotations,
@@ -65,20 +64,17 @@ RasterizeGaussiansCUDA(
   const int P = means3D.size(0);
   const int H = image_height;
   const int W = image_width;
-//   printf("Before accessing size(1)\n");
   const int FEATURES_CH = colors_precomp.size(1);
-  // TODO: remove features_ex_ch later from codebase
-  const int FEATURES_EX_CH = colors_ex_precomp.size(1);
-//   printf("After accessing size(1)\n");
-  //printf("FEATURES_CH, VL_FEATURE_NUM_CHANNELS in RasterizeGaussiansCUDA(): %d, %d\n", FEATURES_CH, VL_FEATURE_NUM_CHANNELS);
+  const int FEATURES_EX_CH = VL_FEATURE_EX_NUM_CHANNELS;  // Use the value from config.h
+  
   torch::Device device(torch::kCUDA);
-  torch::TensorOptions options(torch::kByte);
+  torch::TensorOptions options(torch::kFloat32);
 
   auto int_opts = means3D.options().dtype(torch::kInt32);
   auto float_opts = means3D.options().dtype(torch::kFloat32);
 
-  torch::Tensor out_color = torch::full({FEATURES_CH, H, W}, 0.0, float_opts); // This can be feature map or RGB image.
-  torch::Tensor out_color_ex = torch::empty({0}, options.device(device)); // This can be feature map or RGB image.
+  torch::Tensor out_color = torch::full({FEATURES_CH, H, W}, 0.0, float_opts);
+  torch::Tensor out_color_ex = torch::full({FEATURES_EX_CH, H, W}, 0.0, float_opts);  // Create with proper dimensions
   torch::Tensor radii = torch::full({P}, 0, means3D.options().dtype(torch::kInt32));
 
   torch::Tensor geomBuffer = torch::empty({0}, options.device(device));
@@ -107,7 +103,7 @@ RasterizeGaussiansCUDA(
 		means3D.contiguous().data<float>(),
 		sh.contiguous().data_ptr<float>(),
         colors_precomp.contiguous().data<float>(),
-        nullptr,
+        nullptr,  // Pass nullptr for the second feature map's data
 		opacity.contiguous().data<float>(),
 		scales.contiguous().data_ptr<float>(),
 		scale_modifier,
@@ -120,21 +116,19 @@ RasterizeGaussiansCUDA(
 		tan_fovy,
 		prefiltered,
 		out_color.contiguous().data<float>(),
-        nullptr,
+        out_color_ex.contiguous().data<float>(),  // Pass the output tensor
 		radii.contiguous().data<int>(),
 		debug);
   }
   return std::make_tuple(rendered, out_color, out_color_ex, radii, geomBuffer, binningBuffer, imgBuffer);
 }
 
-//std::tuple<torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor>
-std::tuple<torch::Tensor, torch::Tensor>
+torch::Tensor
 RasterizeGaussiansBackwardCUDA(
  	const torch::Tensor& background,
 	const torch::Tensor& means3D,
 	const torch::Tensor& radii,
     const torch::Tensor& colors_precomp,
-    const torch::Tensor& colors_ex_precomp,
 	const torch::Tensor& scales,
 	const torch::Tensor& rotations,
 	const float scale_modifier,
@@ -144,7 +138,6 @@ RasterizeGaussiansBackwardCUDA(
 	const float tan_fovx,
 	const float tan_fovy,
     const torch::Tensor& dL_dout_color,
-    const torch::Tensor& dL_dout_color_ex,
 	const torch::Tensor& sh,
 	const int degree,
 	const torch::Tensor& campos,
@@ -158,7 +151,7 @@ RasterizeGaussiansBackwardCUDA(
   const int H = dL_dout_color.size(1);
   const int W = dL_dout_color.size(2);
   const int FEATURES_CH = colors_precomp.size(1);
-  const int FEATURES_EX_CH = colors_ex_precomp.size(1);
+  const int FEATURES_EX_CH = VL_FEATURE_EX_NUM_CHANNELS;  // Use the value from config.h
 
   int M = 0;
   if(sh.size(0) != 0)
@@ -168,9 +161,6 @@ RasterizeGaussiansBackwardCUDA(
 
   const int num_channels_colors_precomp = colors_precomp.size(1);
   torch::Tensor dL_dcolorsprecom = torch::zeros({P, num_channels_colors_precomp}, means3D.options());
-  const int num_channels_colors_ex_precomp = colors_ex_precomp.size(1);
-  torch::Tensor dL_dcolorsprecom_ex = torch::zeros({P, num_channels_colors_ex_precomp}, means3D.options());
-
 
   if(P != 0)
   {
@@ -180,7 +170,7 @@ RasterizeGaussiansBackwardCUDA(
 	  means3D.contiguous().data<float>(),
 	  sh.contiguous().data<float>(),
       colors_precomp.contiguous().data<float>(),
-      colors_ex_precomp.contiguous().data<float>(),
+      nullptr,  // Pass nullptr for the second feature map's data
 	  scales.data_ptr<float>(),
 	  scale_modifier,
 	  rotations.data_ptr<float>(),
@@ -195,14 +185,13 @@ RasterizeGaussiansBackwardCUDA(
 	  reinterpret_cast<char*>(binningBuffer.contiguous().data_ptr()),
 	  reinterpret_cast<char*>(imageBuffer.contiguous().data_ptr()),
 	  dL_dout_color.contiguous().data<float>(),
-      dL_dout_color_ex.contiguous().data<float>(),
-	  dL_dcolorsprecom.contiguous().data<float>(), // Gradient of loss w.r.t. colors_precomp
-      dL_dcolorsprecom_ex.contiguous().data<float>(), // Gradient of loss w.r.t. colors_precomp
+      nullptr,  // Pass nullptr for the second feature map's gradient
+	  dL_dcolorsprecom.contiguous().data<float>(),
+      nullptr,  // Pass nullptr for the second feature map's gradient
 	  debug);
   }
 
-//  return std::make_tuple(dL_dmeans2D, dL_dcolorsprecom, dL_dopacity, dL_dmeans3D, dL_dcov3D, dL_dsh, dL_dscales, dL_drotations);
-  return std::make_tuple(dL_dcolorsprecom, dL_dcolorsprecom_ex);
+  return dL_dcolorsprecom;
 }
 
 torch::Tensor markVisible(
