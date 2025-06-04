@@ -60,6 +60,7 @@ def render(viewpoint_camera, pc : GaussianModel, pipe, bg_color : torch.Tensor, 
     )
 
     if bvl_feature_precomp:
+        fmap_resolution = 4
         if fmap_resolution > 0:
             raster_settings = GaussianRasterizationSettings(
                 image_height=int(viewpoint_camera.image_height//fmap_resolution),

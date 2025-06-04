@@ -71,6 +71,8 @@ RasterizeGaussiansCUDA(
   const int FEATURES_EX_CH = colors_ex_precomp.size(1);
 //   printf("After accessing size(1)\n");
   //printf("FEATURES_CH, VL_FEATURE_NUM_CHANNELS in RasterizeGaussiansCUDA(): %d, %d\n", FEATURES_CH, VL_FEATURE_NUM_CHANNELS);
+  torch::Device device(torch::kCUDA);
+  torch::TensorOptions options(torch::kByte);
 
   auto int_opts = means3D.options().dtype(torch::kInt32);
   auto float_opts = means3D.options().dtype(torch::kFloat32);
@@ -79,8 +81,6 @@ RasterizeGaussiansCUDA(
   torch::Tensor out_color_ex = torch::empty({0}, options.device(device)); // This can be feature map or RGB image.
   torch::Tensor radii = torch::full({P}, 0, means3D.options().dtype(torch::kInt32));
 
-  torch::Device device(torch::kCUDA);
-  torch::TensorOptions options(torch::kByte);
   torch::Tensor geomBuffer = torch::empty({0}, options.device(device));
   torch::Tensor binningBuffer = torch::empty({0}, options.device(device));
   torch::Tensor imgBuffer = torch::empty({0}, options.device(device));
