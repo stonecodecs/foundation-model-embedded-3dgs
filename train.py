@@ -168,6 +168,7 @@ def training(dataset, opt, pipe, testing_iterations, saving_iterations, checkpoi
         gt_image = viewpoint_cam.original_image.cuda() # (C, H, W) tmp (3, 738, 994)
         if bvl_feature_precomp and fmap_resolution>0: # Resize the image to 1/4 resolution
             H_gtimg, W_gtimg = gt_image.shape[-2], gt_image.shape[-1]
+            # gt_image_orig = gt_image.clone()
             gt_image = F.interpolate(gt_image.unsqueeze(dim=0), size=(int(H_gtimg//fmap_resolution), int(W_gtimg//fmap_resolution)),
                                                  mode="bilinear").squeeze(dim=0)
         H_gtimg, W_gtimg = gt_image.shape[-2], gt_image.shape[-1]

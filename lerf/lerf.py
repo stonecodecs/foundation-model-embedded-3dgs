@@ -59,33 +59,21 @@ class LERFModel(nn.Module):
         self.intermed_vlfeat_dim = self.lerf_field.intermed_vlfeat_dim
         mhe_dim = self.intermed_vlfeat_dim
         self.clip_cnn = nn.Sequential(
-            nn.Conv2d(mhe_dim, 256, 3),
+            nn.Conv2d(mhe_dim, 256, 1),
             nn.ReLU(),
-            nn.Conv2d(256, 256, 3),
+            nn.Conv2d(256, 256, 1),
             nn.ReLU(),
-            nn.ConvTranspose2d(256, 256, 3, 2, output_padding=0),
+            nn.Conv2d(256, 256, 1),
             nn.ReLU(),
-            nn.Conv2d(256, 256, 3),
+            nn.Conv2d(256, 256, 1),
             nn.ReLU(),
-            nn.ConvTranspose2d(256, 256, 3, 2, output_padding=0),
-            nn.ReLU(),
-            nn.Conv2d(256, 256, 3),
-            nn.ReLU(),
-            nn.Conv2d(256, self.image_encoder_featdim, 1)
+            nn.Conv2d(256, self.image_encoder_featdim, 1),
         )
 
         self.dino_cnn = nn.Sequential(
-            nn.Conv2d(mhe_dim, 256, 3),
+            nn.Conv2d(mhe_dim, 256, 1),
             nn.ReLU(),
-            nn.ConvTranspose2d(256, 256, 3, 2, output_padding=0),
-            nn.ReLU(),
-            nn.Conv2d(256, 256, 3),
-            nn.ReLU(),
-            nn.ConvTranspose2d(256, 256, 3, 2, output_padding=0),
-            nn.ReLU(),
-            nn.Conv2d(256, 256, 3),
-            nn.ReLU(),
-            nn.Conv2d(256, DINO_DIM, 1)
+            nn.Conv2d(256, DINO_DIM, 1),
         )
 
     def forward(self, gaussian_samples: GaussianModel=None, clip_scales=None, valid_gaussians_mask=None, mhe_feat_map=None):

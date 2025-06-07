@@ -53,7 +53,7 @@ for SCENE in "${SELECTED_SCENES[@]}"; do
     python train.py -s "$DATA_PATH/$SCENE/$SCENE" --model_path ${SCENE}_output --test_iterations 7000 30000 --save_iterations 7000 30000 --iterations 30000 --checkpoint_iterations 7000 30000 --port 6009
     echo "$(date '+%Y-%m-%d %H:%M:%S') - Gaussian construction completed for $SCENE; now training..." >> ${SCENE}_output/gpu_memory_${SCENE}.log
     echo -e "Training for $SCENE...\n"
-    python train.py -s $DATA_PATH/$SCENE/$SCENE --model_path ${SCENE}_output  --opt_vlrenderfeat_from 30000 --test_iterations 32000 32500  --save_iterations 32000 32500 --iterations 32500  --checkpoint_iterations 32000 32500 --start_checkpoint ${SCENE}_output/chkpnt30000.pth --fmap_resolution 2 --lambda_clip 0.2  --fmap_lr 0.005  --fmap_render_radiithre 2  --port 6009
+    python train.py -s $DATA_PATH/$SCENE/$SCENE --model_path ${SCENE}_output  --opt_vlrenderfeat_from 30000 --test_iterations 32000 32500  --save_iterations 32000 32500 --iterations 32500  --checkpoint_iterations 32000 32500 --start_checkpoint ${SCENE}_output/chkpnt30000.pth --fmap_resolution -1 --lambda_clip 0.2  --fmap_lr 0.005  --fmap_render_radiithre 2  --port 6009
     echo -e "Finished training for $SCENE.\n"
     echo -e "Rendering + eval for $SCENE...\n"
     python ./render_lerf_relavancy_eval.py -s $DATA_PATH/$SCENE/$SCENE -m ${SCENE}_output/ --dataformat colmap --eval_keyframe_path_filename $DATA_PATH/Localization_eval_puremycolmap/${SCENE}/keyframes_reversed_transform2colmap.json --iteration 32500

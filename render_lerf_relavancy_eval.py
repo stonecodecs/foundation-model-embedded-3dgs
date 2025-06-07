@@ -155,8 +155,46 @@ def get_relavancy(lerf_model, rendered_featmap_clip, rendered_image, img_idx, re
     return correctquery_in_img, len(set(queries))
 
 
+def generate_relevancy_maps(lerf_model, rendered_featmap_clip, rendered_image, img_idx, render_path, queries=None):
+    '''
+    Generate relevancy maps for given queries without evaluation
+    rendered_image: tensor (C, H, W)
+    queries: list of text queries to generate relevancy maps for
+    '''
+    global eval_keyframe_path_filename
+    # Get positive text prompts
+    eval_keyframes_dir = Path(eval_keyframe_path_filename).parents[0] # eval_keyframes_filename is "xxxx/keyframes_reversed_transform2colmap.json"
 
-def render_lerf_set(model_path, name, iteration, views, gaussians,  lerf_model, pipeline, background):
+    shapes = get_shapes_fromjson(os.path.join(eval_keyframes_dir, f'0_rgb.json')) # all use the same queries
+    img_path = os.path.join(eval_keyframes_dir, f'{img_idx}_rgb.png')
+    queries = [shape['label'] for shape in shapes]
+
+    output_path = f'{render_path}/relevancy_maps'
+    Path(output_path).mkdir(parents=True, exist_ok=True)
+
+    # Save the rendered RGB image
+    torchvision.utils.save_image(rendered_image, f'{output_path}/{img_idx}_rendered_rgb.png')
+
+    for query in queries:
+        with torch.no_grad():
+            lerf_image_encoder.set_positives(text_list=[query])
+            pos_prob_maps_rendered = lerf_model.get_relevancy_img(rendered_featmap_clip,
+                                                                  lerf_image_encoder)  # (n_positive_embeds, H, W, 1)
+
+        name = f'{output_path}/{img_idx}_{query}'
+        output_relevancy = pos_prob_maps_rendered[0].cpu().numpy()  # Tensor (270, 480, 1)
+
+        # Save relevancy map as image
+        plt.matshow(output_relevancy, cmap='turbo')
+        plt.axis('off')
+        plt.savefig(f'{name}_relevancy.png')
+        plt.close()
+        
+        # Save relevancy map as numpy array
+        np.save(f'{name}_relevancy.npy', output_relevancy)
+
+
+def render_lerf_set(model_path, name, iteration, views, gaussians,  lerf_model, pipeline, background, skip_eval=False):
     render_path = os.path.join(model_path, name, "ours_{}".format(iteration), "renders")
     print("render_path: ", render_path)
     # gts_path = os.path.join(model_path, name, "ours_{}".format(iteration), "gt")
@@ -201,18 +239,22 @@ def render_lerf_set(model_path, name, iteration, views, gaussians,  lerf_model, 
         # plt.show()
 
         ## Get relavancy map
-        num_correctquery, num_query = get_relavancy(lerf_model, rendered_featmap_clip, rendered_image, idx, render_path, results_lines=results_lines)
-        num_true_positives += num_correctquery
-        num_labels += num_query
+        if not skip_eval:
+            num_correctquery, num_query = get_relavancy(lerf_model, rendered_featmap_clip, rendered_image, idx, render_path, results_lines=results_lines)
+            num_true_positives += num_correctquery
+            num_labels += num_query
+        else:
+            generate_relevancy_maps(lerf_model, rendered_featmap_clip, rendered_image, idx, render_path)
 
-    str_eval = f'{num_true_positives / num_labels:5f} {num_true_positives} {num_labels}'
-    print("In general, correct_rate: " + str_eval)
-    eval_output_path = f'{render_path}/eval_relevancy'
-    with open(f'{eval_output_path}/eval_relevancy.txt', 'w') as file1:
-        file1.write("correct_query total_query camera_idx \n")
-        for result in results_lines:
-            file1.write(" ".join(map(str, result)) + "\n")
-        file1.write(str_eval)
+    if not skip_eval:
+        str_eval = f'{num_true_positives / num_labels:5f} {num_true_positives} {num_labels}'
+        print("In general, correct_rate: " + str_eval)
+        eval_output_path = f'{render_path}/eval_relevancy'
+        with open(f'{eval_output_path}/eval_relevancy.txt', 'w') as file1:
+            file1.write("correct_query total_query camera_idx \n")
+            for result in results_lines:
+                file1.write(" ".join(map(str, result)) + "\n")
+            file1.write(str_eval)
 
 
 def render_lerf_sets(dataset : ModelParams, ckpt_filename : str, pipeline : PipelineParams, runon_train : bool, skip_test : bool, dataformat='lerf'):
@@ -244,7 +286,7 @@ def render_lerf_sets(dataset : ModelParams, ckpt_filename : str, pipeline : Pipe
         background = torch.tensor(bg_color, dtype=torch.float32, device="cuda")
 
         if runon_train:
-             render_lerf_set(dataset.model_path, "train", iteration_num, scene.getTrainCameras(), gaussians, lerf_model, pipeline, background)
+             render_lerf_set(dataset.model_path, "train", iteration_num, scene.getTrainCameras(), gaussians, lerf_model, pipeline, background, skip_eval=True)
 
         if not skip_test:
              render_lerf_set(dataset.model_path, "test", iteration_num, scene.getTestCameras(), gaussians, lerf_model, pipeline, background)
